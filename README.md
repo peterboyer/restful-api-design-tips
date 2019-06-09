@@ -2,7 +2,13 @@
 
 ## A working guide of API design tips and trend evaluations.
 
-> We are all apprentices in a craft where no one ever becomes a master — E. Hemingway
+- 📚 Originally published on my Medium blog.
+- 🔗 https://medium.com/studioarmix/learn-restful-api-design-ideals-c5ec915a430f
+- 👏 Feel free to read it there, and clap/comment if you enjoyed it.
+
+
+
+> We are all apprentices in a craft where no one ever becomes a master.
 
 As I write this, I chuckle to myself in seeing a great parallel behind myself referencing Hemingway’s quote from someone else; the sheer notion that I need not labour away at creating a different implementation of the passage with similar functionality for the result value (or in this case, meaning) is a literary testament to code reuse!
 
@@ -22,7 +28,7 @@ We do this with simply adding the version as a prefix to all URLs.
 GET www.myservice.com/api/v1/posts
 ```
 
-However, through studying other API implementations, I’ve grown to like a shorter URL style offered by accessing the API as part of a subdomain, and then dropping the `/api` from the route; *shorter and more concise is better.*
+However, through studying other API implementations, I’ve grown to like a shorter URL style offered by accessing the API as part of a subdomain, and then dropping the `/api` from the route; *shorter and more concise is better*.
 
 ```
 GET api.myservice.com/v1/posts
@@ -62,9 +68,9 @@ A nice example of this is with Tumblr’s "Dashboard Settings" screen, where non
 
 ## Use Plurals
 
-It makes semantic sense when you request many posts from `/posts` .
+It makes semantic sense when you request many posts from `/posts`.
 
-And for goodness sake don’t consider `/post/all` with `/post/:id` !
+And for goodness sake don’t consider `/post/all` with `/post/:id`!
 
 ```
 // DO: plurals are consistent and make sense
@@ -82,11 +88,11 @@ In cases like these you should simply try to get as close to plural as you can!
 
 ## Use Nesting for Relationship Filtering
 
-*Query strings should be used for further filtering results beyond the initial grouping of a logical set offered by a relationship.*
+*Query strings should be used for further filtering results beyond the initial grouping of a logical set offered by a relationship*.
 
 Aim to design endpoint paths that avoid unnecessary query string parameters as they are generally harder to read and to work with when compared to paths whose structure promotes an initial relationship-based filtering and grouping of such items the deeper it goes.
 
-> This `/posts/x/attachments` is better than `/attachments?postId=x` .
+> This `/posts/x/attachments` is better than `/attachments?postId=x`.
 >
 > And this `/posts/x/attachments/y/comments` is so much better than `/comments?postId=x&attachmentId=y`.
 
@@ -129,7 +135,7 @@ There are multiple ways to do this:
 
 Arguably the easiest to implement, where the API accepts a `from` query string parameter and then returns a limited number of results from that offset (commonly `20` results).
 
-Also best to provide a `limit` parameter which has a hard-maximum, such as the case of Twitter, with a maximum of`1000` and default limit of `200` .
+Also best to provide a `limit` parameter which has a hard-maximum, such as the case of Twitter, with a maximum of`1000` and default limit of `200`.
 
 ### Next Page Token
 
@@ -143,7 +149,7 @@ Also best to provide a `limit` parameter which has a hard-maximum, such as the c
 
 > "I do not like enveloping data. It just introduces another key to navigate a potentially dense tree of data. Meta information should go in headers."
 
-> "One argument for nesting data is to provide two distinct root keys to indicate the success of the response, `*data*` and `*error*` . However, I delegate this distinction to the HTTP status codes in cases of errors."
+> "One argument for nesting data is to provide two distinct root keys to indicate the success of the response, `*data*` and `*error*`. However, I delegate this distinction to the HTTP status codes in cases of errors."
 
 Originally, I held the stance that enveloping data is not necessary, and that HTTP provided an adequate "envelope" in itself for delivering a response. However, after reading through [responses on Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/), [various vulnerabilities](http://haacked.com/archive/2008/11/20/anatomy-of-a-subtle-json-vulnerability.aspx/) and [potential hacks](http://haacked.com/archive/2009/06/25/json-hijacking.aspx/) can occur [if you do not envelope JSON arrays](https://www.owasp.org/index.php/AJAX_Security_Cheat_Sheet#Always_return_JSON_with_an_Object_on_the_outside).
 
@@ -222,19 +228,19 @@ Because we are using HTTP methods, we should use HTTP status codes. Although a c
 
 I like to use:
 
-###for Data Errors
+### for Data Errors
 
 - `400` for when the requested information is incomplete or malformed.
 - `422` for when the requested information is okay, but invalid.
 - `404` for when everything is okay, but the resource doesn’t exist.
 - `409` for when a conflict of data exists, even with valid information.
 
-###for Auth Errors
+### for Auth Errors
 
 - `401` for when an access token isn’t provided, or is invalid.
 - `403` for when an access token is valid, but requires more privileges.
 
-###for Standard Statuses
+### for Standard Statuses
 
 - `200` for when everything is okay.
 - `204` for when everything is okay, but there’s no content to return.
@@ -242,24 +248,22 @@ I like to use:
 
 Furthermore, returning responses after these errors is also very important. I want to consider not only the presentation of the status itself, but also a reason behind it.
 
+In the case of trying to create a new account, imagine we provide an `email` and `password`. Of course we would like to have our client app prevent any requests with an invalid email, or password that is too short, but outsiders have as much access to the API as we do from our client app when it’s live.
 
-
-In the case of trying to create a new account, imagine we provide an `email` and `password` . Of course we would like to have our client app prevent any requests with an invalid email, or password that is too short, but outsiders have as much access to the API as we do from our client app when it’s live.
-
-- If the `email` field is missing, return a `400` .
-- If the `password` field is too short, return a `422` .
-- If the `email` field isn’t a valid email, return a `422` .
-- If the `email` is already taken, return a `409` .
+- If the `email` field is missing, return a `400`.
+- If the `password` field is too short, return a `422`.
+- If the `email` field isn’t a valid email, return a `422`.
+- If the `email` is already taken, return a `409`.
 
 > "It’s much better to specify a more specific 4xx series code than just plain 400. I understand that you can put whatever you want in the response body to break down the error but codes are much easier to read at a glance." ([source](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/diafp5l/))
 
-Now from these cases, two errors returned `422s` regardless of their reasons being different. This is why we need an error code, and maybe even an error description. It’s important to make a distinction between code and description as I intend to have `code` as a machine consumable constant, and `message` as a human consumable string that may change.
+Now from these cases, two errors returned `422`s regardless of their reasons being different. This is why we need an error code, and maybe even an error description. It’s important to make a distinction between code and description as I intend to have `code` as a machine consumable constant, and `message` as a human consumable string that may change.
 
 In the case of per-field errors, the presence of the field as a key in the error is enough of a "code" to indicate that it is a target of a validation error.
 
 
 
-##Field Validation Errors
+## Field Validation Errors
 
 For returning those per field errors, it may be returned as:
 
