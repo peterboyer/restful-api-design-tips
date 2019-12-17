@@ -3,7 +3,7 @@
 ## A working guide of API design tips and trend evaluations.
 
 - 📚 Originally published on my Medium blog.
-- 🔗 https://medium.com/@petertboyer/learn-restful-api-design-ideals-c5ec915a430f
+- 🔗 https://medium.com/p/c5ec915a430f
 - 👏 Feel free to read it there, and clap/comment if you enjoyed it.
 
 > We are all apprentices in a craft where no one ever becomes a master.
@@ -14,7 +14,7 @@ But I’m not here to write about the benefits of code packages, but more to men
 
 From publishing this article, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others!
 
-(Edit: 9/June/2019) And now it's been two years since I first published [this article](https://medium.com/@petertboyer/learn-restful-api-design-ideals-c5ec915a430f) and it’s been incredible to see that it’s been viewed 150,000+ times and received thousands of likes and shares, and once again I want express my gratitude to all my readers and followers!
+(Edit: 9/June/2019) And now it's been two years since I first published [this article](https://medium.com/p/c5ec915a430f) and it’s been incredible to see that it’s been viewed 150,000+ times and received thousands of likes and shares, and once again I want express my gratitude to all my readers and followers!
 
 
 
