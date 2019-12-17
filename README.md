@@ -3,10 +3,8 @@
 ## A working guide of API design tips and trend evaluations.
 
 - 📚 Originally published on my Medium blog.
-- 🔗 https://medium.com/studioarmix/learn-restful-api-design-ideals-c5ec915a430f
+- 🔗 https://medium.com/@petertboyer/learn-restful-api-design-ideals-c5ec915a430f
 - 👏 Feel free to read it there, and clap/comment if you enjoyed it.
-
-
 
 > We are all apprentices in a craft where no one ever becomes a master.
 
@@ -14,7 +12,9 @@ As I write this, I chuckle to myself in seeing a great parallel behind myself re
 
 But I’m not here to write about the benefits of code packages, but more to mention some of the traits I’ve come to appreciate, and actively implement in present and future projects. And of these features and implementation details, I grow my own package of API rules and primitives.
 
-From publishing this article, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others! (Edit: 9/June/2019) And now it's been two years since I first published [this article](https://medium.com/studioarmix/learn-restful-api-design-ideals-c5ec915a430f) and it’s been incredible to see that it’s been viewed 150,000+ times and received thousands of likes and shares, and once again I want express my gratitude to all my readers and followers!
+From publishing this article, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others!
+
+(Edit: 9/June/2019) And now it's been two years since I first published [this article](https://medium.com/@petertboyer/learn-restful-api-design-ideals-c5ec915a430f) and it’s been incredible to see that it’s been viewed 150,000+ times and received thousands of likes and shares, and once again I want express my gratitude to all my readers and followers!
 
 
 
@@ -62,7 +62,9 @@ I would like to add that I think `PATCH` is great way to cut down the size of re
 
 A nice example of this is with Tumblr’s "Dashboard Settings" screen, where non-critical options about the user experience of the service can be edited and saved, per item, without the need of a final form submission button. It is simply a much more organic way to interact with the user’s preference data.
 
-![img](https://cdn-images-1.medium.com/max/800/1*DUQ4vVh0faIReP2Wqr9V_w.png)The "Saved" tag appears and then disappears shortly after modifying the option.
+![img](https://cdn-images-1.medium.com/max/800/1*DUQ4vVh0faIReP2Wqr9V_w.png)
+
+The "Saved" tag appears and then disappears shortly after modifying the option.
 
 
 
