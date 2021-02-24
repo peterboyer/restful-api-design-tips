@@ -6,15 +6,17 @@
 - 🔗 https://medium.com/p/c5ec915a430f
 - 👏 Feel free to read it there, and clap/comment if you enjoyed it.
 
+
+
 > We are all apprentices in a craft where no one ever becomes a master.
 
-As I write this, I chuckle to myself in seeing a great parallel behind myself referencing Hemingway’s quote from someone else; the sheer notion that I need not labour away at creating a different implementation of the passage with similar functionality for the result value (or in this case, meaning) is a literary testament to code reuse!
+I wanted to bring together some of the many patterns I’ve come to appreciate and actively implement in present and future projects.
 
-But I’m not here to write about the benefits of code packages, but more to mention some of the traits I’ve come to appreciate, and actively implement in present and future projects. And of these features and implementation details, I grow my own package of API rules and primitives.
+### Contributing
 
-From publishing this article, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others!
+If you have any comments or suggestions, please [open an issue](https://github.com/ptboyer/restful-api-design-tips/issues/new) or a [pull request](https://github.com/ptboyer/restful-api-design-tips/pulls) with any changes that you would like to contribute! Thanks!
 
-(Edit: 9/June/2019) And now it's been two years since I first published [this article](https://medium.com/p/c5ec915a430f) and it’s been incredible to see that it’s been viewed 150,000+ times and received thousands of likes and shares, and once again I want express my gratitude to all my readers and followers!
+After initially publishing this article many years ago, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others!
 
 
 
@@ -42,15 +44,9 @@ It is important to consider that when placing your API into a *different subdoma
 
 
 
-# Routes
+# Methods
 
-When building your routes you need to think of your endpoints as groups of resources from which you may read, add, edit and delete from and these actions are encapsulated as HTTP methods.
-
-
-
-## Use HTTP Methods
-
-Use methods such as:
+Use HTTP methods such as:
 
 - `GET` for fetching data.
 - `POST` for adding data.
@@ -64,27 +60,31 @@ A nice example of this is with Tumblr’s "Dashboard Settings" screen, where non
 
 ![img](https://cdn-images-1.medium.com/max/800/1*DUQ4vVh0faIReP2Wqr9V_w.png)
 
-The "Saved" tag appears and then disappears shortly after modifying the option.
+*The "Saved" tag appears and then disappears shortly after modifying the option.*
+
+
+
+# Routes
+
+When building your routes you need to think of your endpoints as groups of resources from which you may read, add, edit and delete from and these actions are encapsulated as HTTP methods.
 
 
 
 ## Use Plurals
 
-It makes semantic sense when you request many posts from `/posts`.
+It makes semantic sense that you request many posts from `/posts`.
 
-And for goodness sake don’t consider `/post/all` with `/post/:id`!
+And for goodness sake don’t consider mixing `/post/all` with `/post/:id`!
 
-```
+Although some resource names can't be pluralised, you should try to get as close to plural as you can.
+
+```js
 // DO: plurals are consistent and make sense
 GET /v1/posts/:id/attachments/:id/comments
 
 // DON'T: is it just one comment? is it a form? etc.
 GET /v1/post/:id/attachment/:id/comment
 ```
-
-> "I like the idea of using plurals for resource names, but sometimes you get names that can’t be pluralised." ([source](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9r20n/))
-
-In cases like these you should simply try to get as close to plural as you can!
 
 
 
@@ -102,16 +102,16 @@ Aim to design endpoint paths that avoid unnecessary query string parameters as t
 
 ## Use More of your "Route-Space"
 
-You should aim to **keep your API as flat as possible** and not crowd your resource paths. Allow yourself to provide flat routes to all update/delete your resources such as in the case of posts having comments, allow `/posts/:id/comments` to fetch the comments for a post based on relationship, but also offer `/comments/:id` to allow editing of comments without needing a handle for the post for every single route.
+You should aim to **keep your API as flat as possible** and not crowd your resource paths. Allow yourself to provide root-level endpoints for all of your resources for when you eventually must update/delete them. For example, the case of a post having comments, allow `GET /posts/:id/comments` to fetch the comments for a post based on that relationship, but also offer `PATCH /comments/:id` to allow editing of comments without needing to track the id  for that post for every single route.
 
 - **Longer paths for creating/fetching** nested resources by relationship
 - **Shorter paths for updating/deleting** resources based on their `id`.
 
 
 
-### Use the Authorisation Context to Filter
+### Use the Authorisation context to Filter
 
-When it comes to providing an endpoint to access all of a user's own resources (e.g. all my own posts) you might end up with many ways to provide that information, it's up to you what best suits your application.
+When it comes to providing an endpoint to access to all of a user's own resources (e.g. all my own posts) you may end up with many ways to serve that information; it's up to you what best suits your application.
 
 1. Nest a `/posts` relationship under `/me` with `GET /me/posts`, or
 2. Use the existing `/posts` endpoint but filter with query string, `GET /posts?user=<id of self>`, or
@@ -121,27 +121,15 @@ When it comes to providing an endpoint to access all of a user's own resources (
 
 ### Use a "Me" Endpoint
 
-Have an endpoint like `GET /me` to deliver basic data about the user as distinguished through the `Authorisation` header. This can include info about the user's permissions/scopes/groups/posts/sessions etc. that allow the client to show/hide elements and routes based on your permissions.
+As hinted above, implement a `GET /me` endpoint to deliver basic data about the user as distinguished through the `Authorisation` header. This can include info about the user's permissions/scopes/groups/posts/sessions etc. that allow the client to show/hide elements and routes based on your permissions.
 
 When it comes to providing endpoints for updating user preferences allow `PATCH /me` to change those intrinsic values.
 
 
 
-## Provide Pagination
+## Cursor-based Pagination
 
-Pagination is really important because you don’t want a simple request to be incredibly expensive if there are thousands of rows of results. It seems obvious, but many neglect this functionality.
-
-There are multiple ways to do this:
-
-### "From" Parameter
-
-Arguably the easiest to implement, where the API accepts a `from` query string parameter and then returns a limited number of results from that offset (commonly `20` results).
-
-Also best to provide a `limit` parameter which has a hard-maximum, such as the case of Twitter, with a maximum of`1000` and default limit of `200`.
-
-### Next Page Token
-
-[Google’s Places API](https://developers.google.com/places/web-service/search#PlaceSearchResults) returns a `next_page_token` in its responses if there is more information available beyond the limited `20` results per page. It then accepts `pagetoken` as a parameter for a new request which continues returning more results with a new `next_page_token` until it is exhausted. [Twitter does a similar thing](https://dev.twitter.com/ads/basics/pagination) instead using a param called `next_cursor`.
+Pagination is necessary as your dataset grows and fetching potentially thousands of items from a collection is incredibly expensive for both the server and the client. One of the best ways to do handle pagination is by using query parameters such as `from_<PROPERTY>` to indicate the beginning of your result set, with an optional `limit` parameter that defaults to something like `20` with a maximum of `50` (depending on your use case). In your responses' `meta` key you can provide information such as `total` count, and a uniquely generated `cursor` used for [cursor-based pagination](https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination) (used by most applications, particularly [Google’s Places API](https://developers.google.com/places/web-service/search#PlaceSearchResults) and [Twitter](https://dev.twitter.com/ads/basics/pagination)).
 
 
 
@@ -149,56 +137,52 @@ Also best to provide a `limit` parameter which has a hard-maximum, such as the c
 
 ## Use Envelopes
 
-> "I do not like enveloping data. It just introduces another key to navigate a potentially dense tree of data. Meta information should go in headers."
+It is good to maintain a clean response structure for your APIs in the event that you need to add metadata (e.g. pagination information) to your responses. An easy way to do this is to envelope your application response data under a `data` key, similar to GraphQL responses. From there you can freely add other keys, most likely an `errors` key in which to return any errors that are not to be conflated with correct `data`, and perhaps even a `meta` key, in which you may include pagination information like `total` and `cursor` which, once again, are not to be conflated with `data` items or indicative of any `errors`.
 
-> "One argument for nesting data is to provide two distinct root keys to indicate the success of the response, `*data*` and `*error*`. However, I delegate this distinction to the HTTP status codes in cases of errors."
+If you choose to build your endpoints to allow for partial submission success (in which your transaction will still operate on and return correct data, but will also accumulate errors from incorrect data to respond afterwards) you will be able to return both successful response data with `data` **AND** any problems with `errors`. In the case of HTTP status codes, [`207` seems the most appropriate](https://httpstatuses.com/207).
 
-Originally, I held the stance that enveloping data is not necessary, and that HTTP provided an adequate "envelope" in itself for delivering a response. However, after reading through [responses on Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/), [various vulnerabilities](http://haacked.com/archive/2008/11/20/anatomy-of-a-subtle-json-vulnerability.aspx/) and [potential hacks](http://haacked.com/archive/2009/06/25/json-hijacking.aspx/) can occur [if you do not envelope JSON arrays](https://www.owasp.org/index.php/AJAX_Security_Cheat_Sheet#Always_return_JSON_with_an_Object_on_the_outside).
+Separating your responses' data types into `data`, `errors`, `meta`, etc. helps remove validation headache when clients inspect your response, whereby you may easily check for the existence of an `errors` key in the response rather than using keys like `code` to differentiate an `ITEM` from an `ERROR`.
 
-You should envelope your data responses!
-
-```
+```js
 // DO: enveloped
 {
-  data: [
-    { ... },
-    { ... },
-    // ...
-  ]
+  data: ITEM or [ ITEM, ITEM, ... ],
+  meta: { total: 1000, cursor: "0794405882026854" },
+  errors: [
+    { code: "MY_ERROR_CODE", extensions?: { ... } },
+    ERROR,
+    ERROR,
+    ...
+  ],
 }
 
 // DON'T non-enveloped
 [
-  { ... },
-  { ... },
+  ITEM,
+  ITEM,
   // ...
 ]
 ```
 
-> "Additionally, if you like to use a tool like [normalizr](https://github.com/paularmstrong/normalizr) for parsing data from responses client-side, removing an envelope removes the need for constantly extracting the data from the response payload to pass it to be normalised."
-
-On the contrary, providing an extra key for accessing your `data` allows for reliably checking if anything was actually returned, and if not, may refer to a non-colliding `error` key separate from the body of a response.
-
-It is also important to consider that unlike some, languages such as JavaScript will evaluate empty objects as `true`! Hence it is important to not return an empty object for `error` as part of a response in the case of:
-
-```javascript
-// enveloped, error extraction from payload
-const { data, error } = payload
-// processing errors if they exist
-if (error) { throw ... }
-// otherwise
-const normalizedData = normalize(data, schema)
-```
 
 
+## Responses and Requests
 
-## JSON Responses and Requests
+Most of the time you'll be communicating in JSON for both requests and responses.
 
-> "Everything should be serialised into JSON. If you’re expecting JSON from the server, be polite, and provide the server with JSON. *Consistency!*"
+If your API responses are in JSON, your server must include a `Content-Type: application/json` header expressing the MIME-type in use.
 
-Obviously "everything" is an overstatement as some comments point out, but was intended to refer to any simple, plain object that should be serialised for the process of consuming and/or returning from the API.
+For all other response formats such as CSVs/images/etc. you must define and return those respective MIME-types in your headers.
 
-It is essential to *define your media types* through headers on both responses and requests for a RESTful API. When dealing with JSON ensure that you include a `Content-Type: application/json` header, and respectively for other response types, be it CSVs or binaries.
+Most modern frameworks and tools for APIs and clients-alike will automatically handle these headers for you.
+
+### `Accept` header
+
+This header is set by the client making a request to the server and is used to inform the server as to what format it wants in return.
+
+If you're only supporting JSON responses (instead of something like XML), then your API should return a `415` Unsupported Media Type HTTP status code for the resource that is trying to be accessed if the API is unable to respond in the format specified by the `Accept` header.
+
+I've seen some API's that use a `/json` or `/xml` suffix as part of a URL to access a resource, however this isn't exactly RESTful, and instead the `Accept` header should be used.
 
 
 
@@ -210,11 +194,9 @@ When updating any resource through a `PUT` or `PATCH` it’s good practice to re
 
 ### Use 204 for Deletions
 
-There have been cases where I’ve had nothing to return from the success of an action (i.e. `DELETE`), however I feel that returning an empty object can in some languages (such as Python) be evaluated as false and may not be as obvious to a human debugging their application.
-
 Support the `204 — No Content` response status code in cases where the request was successful but has no content to return. The envelope of the response, coupled with a `2XX` HTTP success code is enough to indicate a successful response without arbitrary "information".
 
-```
+```js
 DELETE /v1/posts/:id
 // response - 204
 {
@@ -269,23 +251,23 @@ In the case of per-field errors, the presence of the field as a key in the error
 
 For returning those per field errors, it may be returned as:
 
-```
+```js
 POST /v1/register
 // request
 {
   "email": "end@@user.comx"
   "password": "abc"
 }
+
 // response - 422
 {
-  "error": {
+  "errors": [{
     "code": "FIELDS_VALIDATION_ERROR",
-    "message": "One or more fields raised validation errors."
-    "fields": {
+    "extensions": {
       "email": "Invalid email address.",
       "password": "Password too short."
     }
-  }
+  }]
 }
 ```
 
@@ -295,7 +277,7 @@ POST /v1/register
 
 And for returning operational validation errors:
 
-```
+```js
 POST /v1/register
 // request
 {
@@ -402,7 +384,7 @@ These "don’ts" should make password validation much easier!
 
 Through developing with AWS, it been necessary to provide a way to output a simple response that can indicate that the API instance is alive and does not need to be restarted. It’s also useful for easily checking what version of the API is on any machine at any time, without authentication.
 
-```
+```js
 GET /v1
 // response - 200
 {
