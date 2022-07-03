@@ -1,46 +1,236 @@
-# RESTful API Design Tips from Experience
-
-## A working guide of API design tips and trend evaluations.
-
-- 📚 Originally published on my Medium blog.
-- 🔗 https://medium.com/p/c5ec915a430f
-- 👏 Feel free to read it there, and clap/comment if you enjoyed it.
-
-
+# REST-like API Design Tips from Experience
 
 > We are all apprentices in a craft where no one ever becomes a master.
 
-I wanted to bring together some of the many patterns I’ve come to appreciate and actively implement in present and future projects.
 
-### Contributing
 
-If you have any comments or suggestions, please [open an issue](https://github.com/ptboyer/restful-api-design-tips/issues/new) or a [pull request](https://github.com/ptboyer/restful-api-design-tips/pulls) with any changes that you would like to contribute! Thanks!
+**A working guide of API design tips and trend evaluations.**
 
-After initially publishing this article many years ago, [many threads of discussion in channels such as Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/) have helped me adjust and tweak some of my explanations and stances on API design. I would like to thank all who have contributed to the discussion, and I hope this helps build this article into a more valuable resource for others!
+Over the years I've built many HTTP/web-based software APIs, many of which adopt common elements of the REST design pattern. This repo serves as a kind of "living" document, bringing together --into a single resource-- many concrete design considerations and architectural perspectives I've come to appreciate and actively implement in present and future projects.
+
+
+
+#### Contributing
+
+If you have any comments, questions, or suggestions, I encourage you to [open an issue](https://github.com/ptboyer/restful-api-design-tips/issues/new) or a [pull request](https://github.com/ptboyer/restful-api-design-tips/pulls)! After initially publishing this article many years ago ([Reddit](https://www.reddit.com/r/programming/comments/6edt2t/consistent_and_beautiful_restful_api_design_tips/di9smxn/), [Medium](https://medium.com/@peterboyer/learn-restful-api-design-ideals-c5ec915a430f)) many threads of discussion have been incredibly helpful in adjusting and tweaking my explanations and opinions on HTTP/API design to make this resource as robust and useful as possible.
+
+
+
+- Interfaces
+- Versioning
+- CORS
+- Methods
+- Routes
+- Responses
+
+
+
+# Interfaces
+
+In most cases:
+
+- you will be creating an **Application Programming *Interface*** (API)
+- with the intention connecting it to a **User *Interface*** (UI).
+
+
+
+Almost all web-**applications** adopt an architecture with:
+
+- a web-**server** (*back*-end, API) communicating with:
+- a web-**client** (*front*-end, UI),
+
+forming a "Full-Stack" Web Application.
+
+
+
+**Interfaces provide structural and behavioural guarantees to interface consumers (clients).**
+
+- When receiving a particular "request", a "server" is **expected** to respond with a particular "response".
+- If this interface is broken/violated/dishonoured, **unexpected** (and potentially dangerous) behaviour occurs.
+
+
+
+**Any consumer/client of any interface will become coupled (dependent) to that interface in some way.**
+
+This means you must take great care in how you develop your own APIs for consumption by clients over its *entire* lifetime.
+
+
+
+# REST
+
+[REpresentational State Transfer](https://en.wikipedia.org/wiki/Representational_state_transfer) (REST) one of many architectural design patterns for internet applications.
+
+A RESTful API is an API that adopts some key patterns and constraints of the REST architecture.
+
+Many RESTful APIs that you'll come across on the internet only make use of [Methods](#methods) and [Routes](#routes) as means of interacting with the State of the web service.
 
 
 
 # Versioning
 
-If you’re going to develop an API for any client service, you’re going to want to prepare yourself for eventual change. This is best realised by providing a "version-namespace" for your RESTful API.
+When developing your API from now and into the future, not only must you consider **the *shapes* of the data** returned and received, you must also consider **the *behaviours* of the interfaces** you create to handle these requests.
 
-We do this with simply adding the version as a prefix to all URLs.
+- e.g. A "create blog post" endpoint may have **identical data inputs and outputs** between v1 and v2, however v2 introduces **validation behaviour** that requires a blog post MUST have a "title" whereas it used to be optional. -- The data shapes are the same but the behaviour is now a **breaking change** in which older consumers/clients may fail unexpectedly if they don't properly handle this new requirement. 
+
+
+
+**Public**: If you make your API available to the **public** (consumers that *you do not control*), you are creating a *commitment* to your consumers that they will be able to request and receive data to/from your interface EXACTLY as you promise.
+
+**Private**: Even if you make your API unavailable to the public, i.e. **private** (consumers that only *you do control*, i.e. your own frontend), you still have a commitment to your own clients and will want to minimise the effects of your API changes:
+
+- e.g. Users with older/outdated versions of your downloadable mobile app (which is a consumer/client of your "private" API).
+- e.g. References to your API in your website's code that would otherwise need to be updated in tandem with your server.
+
+
+
+### Namespace Versioning
+
+A **naive** approach to versioning is to simply prefix your web-based service API with a "version-namespace" like `/v1`.
 
 ```
-GET www.myservice.com/api/v1/posts
+GET foobar.com/api/v1/posts
 ```
 
-However, through studying other API implementations, I’ve grown to like a shorter URL style offered by accessing the API as part of a subdomain, and then dropping the `/api` from the route; *shorter and more concise is better*.
+If you're developing a *downloadable* software **package** then versioning your published releases is a great strategy (particularly with [Semantic Versioning](https://semver.org/) (SemVer)). However, a software **service** is *not downloadable* and only has one publicly accessible version: the version that is currently deployed.
 
+
+
+Attempting to version a software service in this way introduces new problems to solve:
+
+- **When do you increment** the version from v1 to v2 and beyond?
+- **What counts as a major-enough update** to warrant this whole new namespace?
+- **How long do we need to maintain the earlier/now-legacy namespaces** and its endpoints?
+
+
+
+For example: if we have two endpoints, `/users` and `/posts`, and (unfortunately) decide we MUST add important but breaking security functionality to `/users`: do we now increment from `/v1` to `/v2`?
+
+If yes, do we need to also maintain an insecure --but non-breaking-- `/v1` for older consumers? Surely not!
+
+And even if we do end up on `/v2`, what if later we need to critically update the behaviour of the `/posts` endpoint, do we now increment from `/v2` to `/v3`?
+
+If yes, then yikes: we just did 2 MAJOR version bumps in what could've been a single day!
+
+**This isn't a sustainable way to develop, let alone maintain, an API**; prefixing everything with a `/v*` "version-namespace" creates more problems than it solves and increases maintenance stress and, most certainly, technical debt.
+
+
+
+
+
+### Progressive Versioning
+
+A robust approach is to accept that your API is an evolving, non-permanent service, in which:
+
+- **we must carefully and sparingly add new interfaces and behaviours**,
+  - i.e. consider new and potentially future properties and their names,
+- **we must be disciplined in maintaining previously added interfaces and behaviours**,
+  - i.e. write automated tests to ensure your system is functions how you expect it to (after development/refactoring),
+- **we must only disrupt existing behaviours if we can't add a new interface or behaviour solve a problem**,
+  - i.e. there is a serious security bug or exploit that affects your service,
+- and **allow all interfaces the possibility of failing** -- such that new validation requirements and security considerations may be gracefully added and reflected into consumers' own expectations of those behaviours.
+
+
+
+*These strategies and rules may be far more relaxed if your API is private*, because your own clients (e.g. UI/web-pages/etc.) are the only intended consumers of your API and you are not making any public guarantees/commitments to clients you don't control.
+
+
+
+#### Carefully add new properties
+
+Example: I want to add a property on an item that exposes its current "star" rating.
+
+```diff
+GET /items/dkajvh3k24jh
+{
++  "rating": 3  		// simple/agnostic value
+-  "rating": "3 Stars"  // unnecessarily formatted value
+}
 ```
-GET api.myservice.com/v1/posts
+
+- Consider: Return the rating in it's most simple form so that the client can format it how it wants, otherwise the client may need to parse and reformat the value to use it.
+
+
+
+#### Add properties rather than modifying existing ones
+
+Example: I want to express ratings as a number instead of a pre-formatted string.
+
+```diff
+GET /items/dkajvh3k24jh
+{
+  "rating": "3 Stars",
++ "ratingRaw": 3
+}
 ```
 
+- Consider: Don't change `rating` to be a number, but instead consider adding a new property like `ratingRaw` so that any client relying on `rating` to be a formatted string will continue to work, and new clients can opt to use `ratingRaw` as a better alternative.
 
 
-## Cross-Origin Resource Sharing (CORS)
 
-It is important to consider that when placing your API into a *different subdomain* such as `api.myservice.com` it will require [implementing CORS for your backend](https://enable-cors.org/) if you plan to host your frontend site at `www.myservice.com` and expect to use fetch requests without throwing `No Access-Control-Allow-Origin header is present` errors.
+#### Disrupt existing behaviours only if we can't solve it any other way
+
+Example: I accidentally have been returning a user's private email and password hash for `/users/:id` requests.
+
+```diff
+GET /users/joe.bloggs
+{
+  "given_names": "Joe",
+  "family_name": "Bloggs",
+- "email": "joe.bloggs@secretemail.com",
++ "email": "", 			// redact info, preserve the shape with blank
+- "password": "******************************",
++ "password": "",       // redact info, preserve the shape with blank
+}
+```
+
+- Consider: Even if there was a service or feature that relied on this unintentionally exposed information from the API to be able to work correctly, we can still do our best to maintain our public commitments of our API.
+
+
+
+#### Allow for flexible and parse-able failure
+
+Example: I have input validation rules for the given data.
+
+```diff
+POST /books { "title": "" }
+{
+  "error": {
+-   "type": "TitleInvalid",
++	"type": "DataInvalid",
++   "meta": {
++	  "fields": { "title": ["must not be empty"] }
++   }
+  }
+}
+```
+
+- Consider: Rather than an endpoint that has a rigid set of error types, consider error types and responses that are more open to potentially new data and in a predicable/growable format.
+- Consider: Even if your endpoint doesn't have any errors to begin with, allow for the possibility of some kind of "UnhandledError" to be returned to allow the client/consumer to be aware of the possible error interface.
+
+
+
+
+
+# CORS
+
+**Cross-Origin Resource Sharing (CORS) is a web-browser enforced security mechanism** to protect users from malicious website scripts.
+
+Your API will probably be primarily accessed by via the web using a hostname like `foobar.com`.
+
+If your API "backend" is served by a separate web service to how your "frontend" is served, you may consider one of two main strategies:
+
+- (1) Serving your entire API from a route like `/api`: e.g. `foobar.com/api/...`
+- (2) Serving your entire API from a sub-domain like `api.`: e.g. `api.foobar.com/...`
+
+
+
+If your API is private and intended to only serve requests from your own website, like (1) you don't need to add a CORS HTTP--header to your server requests because your webpage and webserver are accessible via the same hostname: e.g. `foobar.com`.
+
+That said, when developing your UI and API simultaneously, you'll probably need to [add a CORS middleware](https://enable-cors.org/) anyway because your web-page (e.g. `localhost:3000`) and web-server (e.g. `localhost:5000`) have different hostnames (due to the different ports!).
+
+
+
+
 
 
 
